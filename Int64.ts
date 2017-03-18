@@ -14,7 +14,7 @@ export default class Int64 {
   }
 
   static make(lo: number, hi?: number) {
-    hi = hi || 0;
+    hi = hi || (lo>>>32);
     if (!hi) {
       if (lo === 0)
         return i64_0;
@@ -22,6 +22,12 @@ export default class Int64 {
         return i64_1;
     }
     return new Int64(lo, hi);
+  }
+
+  static ensure(x: number | Int64): Int64 {
+    if (x instanceof Int64)
+      return x;
+    return Int64.make(x);
   }
 
   static add(x: Int64, y: Int64): Int64 {
@@ -235,6 +241,18 @@ export default class Int64 {
       v = Int64.negate(v);
 
     return v;
+  }
+
+  //unsafe
+  toNumber(): number {
+    if (this.__buf[1] >= 0x80000000)
+      return -Int64.negate(this)._toNumber();
+
+    return this._toNumber();
+  }
+
+  _toNumber(): number {
+    return this.low32 + (this.high32<<32);
   }
 
   toDecimalString_u(): string {
